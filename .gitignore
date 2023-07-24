@@ -1,2 +1,5 @@
 .idea/
 venv/
+uploads/
+.env
+__pycache__/
