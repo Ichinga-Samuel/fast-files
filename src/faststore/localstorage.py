@@ -16,10 +16,13 @@ class LocalStorage(FastStore):
 
     @staticmethod
     async def _upload(file: UploadFile, dest: Path):
-        file_object = await file.read()
-        with open(f'{dest}', 'wb') as fh:
-            fh.write(file_object)
-        await file.close()
+        try:
+            file_object = await file.read()
+            with open(f'{dest}', 'wb') as fh:
+                fh.write(file_object)
+            await file.close()
+        except Exception as e:
+            logger.error(f'Error uploading file: {e} in {LocalStorage.__name__}')
 
     # noinspection PyTypeChecker
     async def upload(self, *, field_file: tuple[str, UploadFile]):

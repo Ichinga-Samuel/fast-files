@@ -1,18 +1,14 @@
-from pathlib import Path
-import asyncio
+from pydantic import BaseModel, create_model, Field
+from typing import Optional
 
 
-async def err(n):
-    if n == 5:
-        raise ValueError('This is not allowed')
-    return n
+def make_model(name: str, **kwargs):
+    return create_model(name, **kwargs)
 
-def check(n):
-    return n
 
-async def main():
-    task = await asyncio.gather(*[err(n) for n in range(10)], return_exceptions=True)
-    # print(v:=type(task[5]))
-    # print(isinstance(task[5], Exception))
-    print(str(task[5]))
-asyncio.run(main())
+file = 'tom'
+
+v = make_model('Test', file=(Optional[int], ...), nam=(str, ...))
+
+v(nam='4')
+print(v.file)

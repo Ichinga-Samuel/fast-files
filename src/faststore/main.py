@@ -1,16 +1,18 @@
 from abc import abstractmethod
-from typing import TypedDict, TypeVar, NotRequired, Callable
+from typing import TypedDict, TypeVar, NotRequired, Callable, Optional
 from pathlib import Path
+from functools import cache
 
-from fastapi import UploadFile, Request, Form, BackgroundTasks
-from pydantic import BaseModel
+from starlette.datastructures import UploadFile as StarletteUploadFile
+from fastapi import UploadFile, Request, Form, BackgroundTasks, File
+from pydantic import BaseModel, create_model, Field
 
-Fields = TypedDict('Fields', {'name': str, 'max_count': NotRequired[int]})
+Fields = TypedDict('Fields', {'name': str, 'max_count': NotRequired[int], 'required': NotRequired[bool]})
 Self = TypeVar('Self', bound='FastStore')
 
 
 def file_filter(req: Request, form: Form, field: str, file: UploadFile) -> bool:
-    return True if file else False
+    return True if isinstance(file, StarletteUploadFile) else False
 
 
 def filename(req: Request, form: Form, field: str, file: UploadFile) -> UploadFile:
@@ -41,6 +43,7 @@ class FileData(BaseModel):
     field_name: str = ''
     metadata: dict = {}
     error_msg: str = ''
+    message: str = ''
 
 
 class Result(BaseModel):
@@ -48,6 +51,8 @@ class Result(BaseModel):
     files: list[FileData] = []
     failed: FileData | list[FileData] = []
     error_message: str = ''
+    message: str = ''
+    status: bool = True
 
 
 class FastStore:
@@ -85,7 +90,7 @@ class FastStore:
         destination: A function that takes in the request, form and file and returns a path to save the file to in the storage service.
     """
 
-    def __init__(self, name: str = '', count: int = 1, fields: list[Fields] | None = None,
+    def __init__(self, name: str = '', count: int = 1, required=False, fields: list[Fields] | None = None,
                  config: dict | None = None):
         """
         Args:
@@ -98,10 +103,18 @@ class FastStore:
         """
         self.name = name
         self.fields = fields
-        self.fields = self.fields or [{'name': self.name, 'max_count': count}]
-        self.max_count = sum([field.get('max_count', 1) for field in self.fields])
+        self.fields = self.fields or [{'name': self.name, 'max_count': count, 'required': required}]
         self.config |= (config or {})
         self._result = Result()
+
+
+    @property
+    @cache
+    def model(self):
+        body = {}
+        for field in self.fields:
+            body[field['name']] = (UploadFile, ...) if field.get('required') else (UploadFile, Field(default=UploadFile(File(...))))
+        return create_model('Form', **body)
 
     async def __call__(self, req: Request, bgt: BackgroundTasks) -> Self:
         try:
@@ -115,9 +128,10 @@ class FastStore:
             file_fields = [(field['name'], _filename(req, form, field['name'], file)) for field in self.fields for file in
                            form.getlist((field['name']))[0:field.get('max_count', None)] if
                            _filter(req, form, field['name'], file)]
+            self.max_count = len(file_fields)
 
             if not file_fields:
-                self.result = Result(error_message='No files were uploaded')
+                self._result = Result(error_message='No files were uploaded', status=False)
 
             elif len(file_fields) == 1:
                 file_field = file_fields[0]
@@ -126,7 +140,7 @@ class FastStore:
             else:
                 await self.multi_upload(field_files=file_fields)
         except Exception as e:
-            self.result = Result(error_message=str(e))
+            self._result = Result(error_message=str(e), status=False)
 
         return self
 
@@ -152,3 +166,4 @@ class FastStore:
             self._result.files.append(value) if value.status else self.result.failed.append(value)
         except Exception as e:
             self._result.error_message = str(e)
+            self._result.status = False

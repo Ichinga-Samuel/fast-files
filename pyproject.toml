@@ -18,6 +18,10 @@ classifiers = [
 keywords = ['fastapi', 'filestorage', 'cloudstorage']
 authors = [{name = "Ichinga Samuel", email = "ichingasamuel@gmail.com"}]
 description = "Storage Engine Package for FastAPI"
+dependencies = [
+    "fastapi",
+    "python-multipart",
+]
 
 [project.urls]
 "Homepage" = "https://github.com/Ichinga-Samuel/faststore"

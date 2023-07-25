@@ -12,7 +12,7 @@ from .main import FastStore, FileData, UploadFile
 logger = logging.getLogger(__name__)
 
 
-class S3(FastStore):
+class S3Storage(FastStore):
     @property
     @cache
     def client(self):
@@ -20,6 +20,12 @@ class S3(FastStore):
         access_key = os.environ.get('AWS_SECRET_ACCESS_KEY')
         region_name = os.environ.get('AWS_DEFAULT_REGION') or self.config.get('region')
         return boto3.client('s3', region_name=region_name, aws_access_key_id=key_id, aws_secret_access_key=access_key)
+
+    async def _upload(self, *, file_obj, bucket, obj_name, extra_args):
+        try:
+            await asyncio.to_thread(self.client.upload_fileobj, file_obj, bucket, obj_name, ExtraArgs=extra_args)
+        except Exception as e:
+            logger.error(f'Error uploading file: {e} in {self.__class__.__name__}')
 
     # noinspection PyTypeChecker
     async def upload(self, *, field_file: tuple[str, UploadFile]):
@@ -32,11 +38,11 @@ class S3(FastStore):
             extra_args = self.config.get('extra_args', {})
 
             if self.config.get('background', False):
-                self.background_tasks.add_task(self.client.upload_fileobj, file.file, bucket, object_name,
-                                               ExtraArgs=extra_args)
+                self.background_tasks.add_task(self._upload, file_obj=file.file, bucket=bucket, obj_name=object_name,
+                                               extra_args=extra_args)
             else:
-                await asyncio.to_thread(self.client.upload_fileobj, file.file, bucket, object_name,
-                                        ExtraArgs=extra_args)
+                await asyncio.to_thread(self._upload, file_obj=file.file, bucket=bucket, obj_name=object_name,
+                                        extra_args=extra_args)
 
             url = f"https://{bucket}.s3.{region}.amazonaws.com/{urlencode(object_name.encode('utf8'))}"
             self.result = FileData(filename=file.filename, content_type=file.content_type, field_name=field_name,
