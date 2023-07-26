@@ -16,13 +16,10 @@ class LocalStorage(FastStore):
 
     @staticmethod
     async def _upload(file: UploadFile, dest: Path):
-        try:
-            file_object = await file.read()
-            with open(f'{dest}', 'wb') as fh:
-                fh.write(file_object)
-            await file.close()
-        except Exception as e:
-            logger.error(f'Error uploading file: {e} in {LocalStorage.__name__}')
+        file_object = await file.read()
+        with open(f'{dest}', 'wb') as fh:
+            fh.write(file_object)
+        await file.close()
 
     # noinspection PyTypeChecker
     async def upload(self, *, field_file: tuple[str, UploadFile]):
@@ -37,10 +34,10 @@ class LocalStorage(FastStore):
                 await self._upload(file, dest)
 
             self.result = FileData(size=file.size, filename=file.filename, content_type=file.content_type,
-                                   path=str(dest), field_name=field_name)
+                                   path=str(dest), field_name=field_name, message='{file.filename} storage was successful')
         except Exception as e:
             logger.error(f'Error uploading file: {e} in {self.__class__.__name__}')
-            self.result = FileData(status=False, error_msg=str(e), field_name=field_name)
+            self.result = FileData(status=False, error=str(e), field_name=field_name, message=f'Unable to save {file.filename}')
 
     async def multi_upload(self, *, field_files: list[tuple[str, UploadFile]]):
         await asyncio.gather(*[self.upload(field_file=field_file) for field_file in field_files])
