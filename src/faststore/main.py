@@ -108,7 +108,6 @@ class FastStore:
         self.config |= (config or {})
         self._result = Result()
 
-
     @property
     @cache
     def model(self):
@@ -164,8 +163,11 @@ class FastStore:
         try:
             if self.max_count == 1:
                 self._result.file = value if value.status else None
-
-            self._result.files.append(value) if value.status else self.result.failed.append(value)
+                self._result.message = '{value.file} stored'
+                self._result.files.append(value) if value.status else self.result.failed.append(value)
+            else:
+                self._result.files.append(value) if value.status else self.result.failed.append(value)
+                self._result.message = f'{len(self._result.files)} files stored'
         except Exception as e:
             self._result.error = str(e)
             self._result.status = False
