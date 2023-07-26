@@ -42,7 +42,7 @@ class FileData(BaseModel):
     file: bytes | None = None
     field_name: str = ''
     metadata: dict = {}
-    error_msg: str = ''
+    error: str = ''
     message: str = ''
 
 
@@ -50,7 +50,7 @@ class Result(BaseModel):
     file: FileData | None = None
     files: list[FileData] = []
     failed: FileData | list[FileData] = []
-    error_message: str = ''
+    error: str = ''
     message: str = ''
     status: bool = True
 
@@ -71,13 +71,13 @@ class FastStore:
     
     Attributes:
         name(str): The name of the form field to expect the file from. defaults to file.
-        count(int): The maximum number of files to accept when using the name argument to represent a single field
+        count(int): The number of files to expect when using the name argument to represent a single field
         this defaults to one
         fields(list[Fields]): The fields to expect from the form.
         request(Request): The request object.
         form(Form): The form object.
         config(dict): The configuration for the storage service.
-        result(Result): The result of the filestorage operation.
+        result(Result): The result of the file storage operation.
         background_tasks(BackgroundTasks): The background tasks object for running tasks in the background.
     
     Config:
@@ -94,8 +94,9 @@ class FastStore:
                  config: dict | None = None):
         """
         Args:
-            name: The name of the file field to expect from the form for a single field upload.
-            count: The maximum number of files to accept for single field upload.
+            name (str): The name of the file field to expect from the form for a single field upload.
+            count (int): The maximum number of files to accept for single field upload.
+            required (bool): required for single field upload. Defaults to false.
             fields: The fields to expect from the form. Usually for multiple file uploads from different fields.
 
             Note:
@@ -131,16 +132,17 @@ class FastStore:
             self.max_count = len(file_fields)
 
             if not file_fields:
-                self._result = Result(error_message='No files were uploaded', status=False)
-
+                self._result = Result(message='No files were uploaded')
+                return 
+                
             elif len(file_fields) == 1:
                 file_field = file_fields[0]
                 await self.upload(field_file=file_field)
-
+                
             else:
                 await self.multi_upload(field_files=file_fields)
         except Exception as e:
-            self._result = Result(error_message=str(e), status=False)
+            self._result = Result(error=str(e), status=False)
 
         return self
 
@@ -165,5 +167,5 @@ class FastStore:
 
             self._result.files.append(value) if value.status else self.result.failed.append(value)
         except Exception as e:
-            self._result.error_message = str(e)
+            self._result.error = str(e)
             self._result.status = False
