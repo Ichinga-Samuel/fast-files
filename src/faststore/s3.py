@@ -22,11 +22,8 @@ class S3Storage(FastStore):
         return boto3.client('s3', region_name=region_name, aws_access_key_id=key_id, aws_secret_access_key=access_key)
 
     async def _upload(self, *, file_obj, bucket, obj_name, extra_args):
-        try:
-            await asyncio.to_thread(self.client.upload_fileobj, file_obj, bucket, obj_name, ExtraArgs=extra_args)
-        except Exception as e:
-            logger.error(f'Error uploading file: {e} in {self.__class__.__name__}')
-
+        await asyncio.to_thread(self.client.upload_fileobj, file_obj, bucket, obj_name, ExtraArgs=extra_args)
+        
     # noinspection PyTypeChecker
     async def upload(self, *, field_file: tuple[str, UploadFile]):
         field_name, file = field_file
@@ -46,10 +43,11 @@ class S3Storage(FastStore):
 
             url = f"https://{bucket}.s3.{region}.amazonaws.com/{urlencode(object_name.encode('utf8'))}"
             self.result = FileData(filename=file.filename, content_type=file.content_type, field_name=field_name,
-                                   url=url)
+                                   url=url, message=f'{file.filename} successfully uploaded')
         except (NoCredentialsError, ClientError, Exception) as err:
             logger.error(f'Error uploading file: {err} in {self.__class__.__name__}')
-            self.result = FileData(status=False, error_msg=str(err), field_name=field_name, filename=file.filename)
+            self.result = FileData(status=False, error=str(err), field_name=field_name, filename=file.filename,
+                                   message=f'Unable to upload {file.filename}')
 
     async def multi_upload(self, *, field_files: list[tuple[str, UploadFile]]):
         await asyncio.gather(*[self.upload(field_file=field_file) for field_file in field_files])
