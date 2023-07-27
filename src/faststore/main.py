@@ -1,7 +1,7 @@
 from abc import abstractmethod
-from typing import TypedDict, TypeVar, NotRequired, Callable, Optional
-from pathlib import Path
+from typing import TypedDict, TypeVar, NotRequired, Callable
 from functools import cache
+from pathlib import Path
 
 from starlette.datastructures import UploadFile as StarletteUploadFile
 from fastapi import UploadFile, Request, Form, BackgroundTasks, File
@@ -12,7 +12,7 @@ Self = TypeVar('Self', bound='FastStore')
 
 
 def file_filter(req: Request, form: Form, field: str, file: UploadFile) -> bool:
-    return True if isinstance(file, StarletteUploadFile) else False
+    return True if (isinstance(file, StarletteUploadFile) and file.filename) else False
 
 
 def filename(req: Request, form: Form, field: str, file: UploadFile) -> UploadFile:
@@ -53,6 +53,15 @@ class Result(BaseModel):
     error: str = ''
     message: str = ''
     status: bool = True
+
+    def reset(self):
+        self.file = None
+        self.files = []
+        self.failed = []
+        self.error = ''
+        self.message = ''
+        self.status = True
+        return self
 
 
 class FastStore:
@@ -117,6 +126,7 @@ class FastStore:
         return create_model('Form', **body)
 
     async def __call__(self, req: Request, bgt: BackgroundTasks) -> Self:
+        self.result.reset()
         try:
             _filter = self.config['filter']
             _filename = self.config['filename']
@@ -132,7 +142,6 @@ class FastStore:
 
             if not file_fields:
                 self._result = Result(message='No files were uploaded')
-                return 
                 
             elif len(file_fields) == 1:
                 file_field = file_fields[0]
@@ -142,7 +151,6 @@ class FastStore:
                 await self.multi_upload(field_files=file_fields)
         except Exception as e:
             self._result = Result(error=str(e), status=False)
-
         return self
 
     @abstractmethod
@@ -163,7 +171,7 @@ class FastStore:
         try:
             if self.max_count == 1:
                 self._result.file = value if value.status else None
-                self._result.message = '{value.file} stored'
+                self._result.message = f'{value.filename} stored'
                 self._result.files.append(value) if value.status else self.result.failed.append(value)
             else:
                 self._result.files.append(value) if value.status else self.result.failed.append(value)

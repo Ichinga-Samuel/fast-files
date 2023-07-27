@@ -3,3 +3,4 @@ venv/
 uploads/
 .env
 __pycache__/
+test_data/

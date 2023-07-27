@@ -1,10 +1,10 @@
-from fastapi import Request, UploadFile, Form
+from fastapi.testclient import TestClient
+from pytest import fixture
 
+from .app import app
 
-def file_filter(req: Request, form: Form, file: UploadFile) -> bool:
-    return True if file.filename.startswith('test') else False
+client = TestClient(app)
 
-
-def filename(req: Request, form: Form, file: UploadFile) -> UploadFile:
-    file.filename = 'test'+file.filename
-    return file
+@fixture
+def test_file():
+    return open('tests/test_data/Forex-Trading-For-Beginners.pdf', 'rb')
