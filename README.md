@@ -84,17 +84,17 @@ This pydantic model represents the result of an individual file storage operatio
 - `error str`: The error message if the file storage operation failed.
 - `message str`: Success message if the file storage operation was successful.
 
-## StoreResult Class
+## Result Class
 The response model for the FastStore class. A pydantic model.
 - `file FileData | None`: The result of a single file upload or storage operation.
 - `files list[FileData]`: The result of multiple file uploads or storage operations.
-- `failed list[FileData]`: The result of a failed file upload or storage operation.
+- `failed list[FileData]`: The results of a failed file upload or storage operation.
 - `error str`: The error message if the file storage operation failed.
 - `message str`: Success message if the file storage operation was successful.
 
 ### Filename and Destination Function. 
 You can specify a filename and destination function for customizing a filename and specifying a storage location for the saved file.
-The filename function should modify the filename attribute of the file and return the modified file while the destination function should return a path or string object.
+The filename function should modify the filename attribute of the file and return the modified file while the destination function should return a path or string object. This functions have access to the request object, the form, the form field and the file objects.
 
 #### A destination function
 ```python
@@ -135,7 +135,8 @@ def local_filter(req: Request, form: Form, field: str, file: UploadFile) -> bool
     return file.filename and file.filename.endswith('.txt')
 ```
 
-
+### Error Handling.
+Any error that occurs is caught and passed to the error attribute of the FileData class and the status is set to false indicating a failed operation then the FileData object is added to the failed list of the result object.
 
 
 
