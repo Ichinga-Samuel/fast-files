@@ -1,3 +1,6 @@
+"""
+
+"""
 from .main import FastStore, FileData, Result
 from .memorystorage import MemoryStorage
 from .localstorage import LocalStorage

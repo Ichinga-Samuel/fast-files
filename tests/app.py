@@ -1,37 +1,112 @@
-from fastapi import FastAPI, Request, Depends, UploadFile, Form
+"""
+This module contains the FastAPI application and the endpoints.
+"""
 import uvicorn
+from fastapi import FastAPI, Request, Depends
+from fastapi.templating import Jinja2Templates
 from dotenv import load_dotenv
-from ..src.faststore import LocalStorage, S3Storage, MemoryStorage, Result
 
+from utils import single_local, multiple_local, single_s3, multiple_s3, single_mem, multiple_mem, Result
 
 load_dotenv()
 
 app = FastAPI()
 
-single_local = LocalStorage(name='book')
-multiple_local = LocalStorage(fields=[{'name': 'author', 'max_count': 3}, {'name': 'book', 'max_count': 2}])
+templates = Jinja2Templates(directory='.')
 
 
-multiple_s3 = S3Storage(fields=[{'name': 'author', 'max_count': 2}, {'name': 'book', 'max_count': 2}])
-single_s3 = S3Storage(name='author')
+@app.get('/')
+async def home(req: Request):
+    """
+    Home page. Renders the home.html template.
+    """
+    return templates.TemplateResponse('home.html', {'request': req})
 
-single_mem = MemoryStorage(name='cover')
-multiple_mem = MemoryStorage(fields=[{'name': 'author', 'max_count': 2}, {'name': 'book', 'max_count': 2}])
 
+@app.post('/local_single')
+async def local_single(model=Depends(single_local.model), sl=Depends(single_local)) -> Result:
+    """
+    Local storage single file upload endpoint.
 
-@app.post('/local_single', response_model=Result)
-async def local_single(sl_form=Depends(single_local.model), sl=Depends(single_local)) -> Result:
+    Args:
+        model (FormModel): The form model dynamically built from the form file fields.
+            This only useful to swagger UI to show the form fields.
+        sl (LocalStorage): The LocalStorage instance.
+
+    Returns:
+        Result: The result of the storage operation.
+    """
     return sl.result
 
 
-# @app.post('/upload_book', response_model=Result)
-# async def upload_book(form=Depends(local.model), boo: LocalStorage = Depends(local)) -> Result:
-#     return boo.result
-#
-#
-# @app.post('/upload_cover')
-# async def upload_cover(cover: MemoryStorage = Depends(mem)) -> Result:
-#     return cover.result
+@app.post('/local_multiple', name='upload', openapi_extra={'form': {'multiple': True}})
+async def local_multiple(model=Depends(multiple_local.model), loc=Depends(multiple_local)) -> Result:
+    """
+    Local storage multiple file upload endpoint.
 
-# if __name__ == "__main__":
-#     uvicorn.run("app:app", port=5000, log_level="info")
+    Args:
+        model (FormModel): The form model dynamically built from the form file fields.
+            This only useful to swagger UI to show the form fields.
+        loc (LocalStorage): The LocalStorage instance.
+
+    Returns:
+        Result: The result of the storage operation.
+    """
+    return loc.result
+
+
+@app.post('/s3_multiple', openapi_extra={'form': {'multiple': True}})
+async def s3_multiple(model=Depends(multiple_s3.model), s3=Depends(multiple_s3)) -> Result:
+    """
+    S3 storage multiple file upload endpoint.
+
+    Args:
+        model (FormModel): The form model dynamically built from the form file fields.
+            This only useful to swagger UI to show the form fields.
+        s3 (S3Storage): The S3Storage instance.
+
+    Returns:
+        Result: The result of the storage operation.
+    """
+    return s3.result
+
+
+@app.post('/s3_single')
+async def s3_single(model=Depends(single_s3.model), s3=Depends(single_s3)) -> Result:
+    return s3.result
+
+
+@app.post('/mem_single')
+async def mem_single(model=Depends(single_mem.model), mem=Depends(single_mem)) -> Result:
+    """
+    Memory storage single file upload endpoint.
+
+    Args:
+        model (FormModel): The form model dynamically built from the form file fields.
+            This only useful to swagger UI to show the form fields.
+        mem (MemoryStorage): The MemoryStorage instance.
+
+    Returns:
+        Result: The result of the storage operation.
+    """
+    return mem.result
+
+
+@app.post('/mem_multiple', openapi_extra={'form': {'multiple': True}})
+async def mem_multiple(model=Depends(multiple_mem.model), mem=Depends(multiple_mem)) -> Result:
+    """
+    Memory storage multiple file upload endpoint.
+
+    Args:
+        model (FormModel): The form model dynamically built from the form file fields.
+            This only useful to swagger UI to show the form fields.
+       mem (MemoryStorage): The MemoryStorage instance.
+
+    Returns:
+        Result: The result of the storage operation.
+    """
+    return mem.result
+
+
+if __name__ == "__main__":
+    uvicorn.run("app:app", port=5000, log_level="info")
