@@ -196,7 +196,9 @@ class FastStore:
         Note:
             If fields is specified, name and count are ignored.
         """
-        self.fields = fields or ([{'name': name, 'max_count': count, 'required': required}] if name else [])
+        field = {'name': name, 'max_count': count, 'required': required} if name else {}
+        self.fields = fields or []
+        self.fields.append(field) if field else ...
         self.config = ({'filter': file_filter, 'max_files': 1000, 'max_fields': 1000, 'filename': filename}
                        | (config or {}))
 
@@ -250,6 +252,7 @@ class FastStore:
             else:
                 await self.multi_upload(field_files=file_fields)
         except (KeyError, AttributeError, ValueError, TypeError, NameError, MemoryError, BufferError) as err:
+            logger.error(f'Error uploading files: {err} in {self.__class__.__name__}')
             self._result = Result(error=str(err), status=False)
         return self
 
@@ -290,13 +293,18 @@ class FastStore:
             value: A FileData instance.
         """
         try:
+            if not isinstance(value, FileData):
+                logger.error(f'Expected FileData instance, got {type(value)} in {self.__class__.__name__}')
+                return
+
             if self.max_count == 1:
                 self._result.file = value if value.status else None
-                self._result.message = f'{value.filename} stored'
+                self._result.message = f'{value.filename} stored' if value.status else f'{value.filename} not stored'
                 self._result.files.append(value) if value.status else self.result.failed.append(value)
             else:
                 self._result.files.append(value) if value.status else self.result.failed.append(value)
-                self._result.message = f'{len(self._result.files)} files stored'
-        except (AttributeError, KeyError, ValueError, TypeError) as err:
-            self._result.error = str(err)
-            self._result.status = False
+                self._result.message = (f'{len(self._result.files)} files stored\n{len(self._result.failed)} files not'
+                                        f' stored')
+        except Exception as err:
+            logger.error(f'Error setting result in {self.__class__.__name__}: {err}')
+            self._result.error += f'{err}\n'

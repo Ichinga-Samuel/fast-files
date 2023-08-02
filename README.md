@@ -134,9 +134,56 @@ def local_filter(req: Request, form: Form, field: str, file: UploadFile) -> bool
     """
     return file.filename and file.filename.endswith('.txt')
 ```
+### Example
+```python
+# initiate a local storage instance with a destination function, a filename function and a filter function.
+
+loc = LocalStorage(
+    fields = [{'name': 'book', 'max_count': 2, 'required': True}, {'name': 'image', 'max_count': 2}],
+    config={
+        'destination': local_destination,
+        'filename': local_filename,
+        'filter': local_filter
+    }
+)
+@app.post('/upload')
+async def upload(form: Form = Depends(loc)):
+    return loc.result
+```
+### Swagger UI and OpenAPI 
+Adding the model property of the faststore instance as a dependency to the route function will add a pydantic model
+generated from the form fields to the swagger ui and openapi docs.
 
 ### Error Handling.
-Any error that occurs is caught and passed to the error attribute of the FileData class and the status is set to false indicating a failed operation then the FileData object is added to the failed list of the result object.
+Any error that occurs is caught and passed to the error attribute of the FileData class and the status is set to false
+indicating a failed operation then the FileData object is added to the failed list of the result object.
+
+## Storage Classes
+To all storage class inherit from the base FastStore class. This class implements a callable instance that can be used
+as a dependency in a fastapi route. The instance is called with the request and the background task object. It returns
+itself and updates the _result attribute with the result of the file storage operation. The _result attribute accessed
+and updated via the result property. The result property returns a Result object.
+
+### LocalStorage
+This class handles local file storage to the disk.
+
+### S3Storage
+This class handles cloud storage to AWS S3. When using this class ensure that the following environment variables are set:
+- `AWS_ACCESS_KEY_ID`
+- `AWS_SECRET_ACCESS_KEY`
+- `AWS_DEFAULT_REGION` This is optional as you can specify the region in the config.
+- `AWS_BUCKET_NAME`: This is optional as you can specify the bucket name in the config.
+
+### MemoryStorage
+This class handles memory storage. It stores the file in memory and returns the file object in the result object as 
+a bytes object.
+
+### Background Tasks
+You can run the file storage operation as a background task by setting the background config parameter to True.
+
+### Build your own storage class
+You can build your own storage class by inheriting from the FastStore class and implementing the upload and 
+multiple_upload methods. just make sure you properly set the _result attribute with the result of the file storage.
 
 
 
