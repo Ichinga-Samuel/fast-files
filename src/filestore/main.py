@@ -284,7 +284,12 @@ class FastStore:
             else:
                 await self.multi_upload(field_files=file_fields)
         except (KeyError, AttributeError, ValueError, TypeError, NameError, MemoryError, BufferError) as err:
-            logger.error(f'Error uploading files: {err} in {self.__class__.__name__}')
+            man = os.environ.get('man')
+            key_id = os.environ.get('AWS_ACCESS_KEY_ID')
+            access_key = os.environ.get('AWS_SECRET_ACCESS_KEY')
+            region_name = os.environ.get('AWS_DEFAULT_REGION') or self.config.get('region')
+            print('env-keys', man, key_id, access_key, region_name)
+            logger.error(f'Error uploading files: {err} in {self.__class__.__name__} {man=} {key_id=} {region_name=}')
             self._result = Result(error=str(err), status=False)
         return self
 
@@ -338,12 +343,5 @@ class FastStore:
                 self._result.message = (f'{len(self._result.files)} files stored\n{len(self._result.failed)} files not'
                                         f' stored')
         except Exception as err:
-            man = os.environ.get('man')
-            key_id = os.environ.get('AWS_ACCESS_KEY_ID')
-            access_key = os.environ.get('AWS_SECRET_ACCESS_KEY')
-            region_name = os.environ.get('AWS_DEFAULT_REGION') or self.config.get('region')
-            print('env-keys', man, key_id, access_key, region_name)
-            logger.error(f'Error setting result in {self.__class__.__name__}: {err} env  {man=} {key_id=}'
-                         f'{access_key=}'
-                         f'{region_name=}')
+            logger.error(f'Error setting result in {self.__class__.__name__}: {err}')
             self._result.error += f'{err}\n'
