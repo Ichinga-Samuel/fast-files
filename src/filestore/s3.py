@@ -91,7 +91,7 @@ class S3Storage(FastStore):
             url = f"https://{bucket}.s3.{region}.amazonaws.com/{urlencode(object_name.encode('utf8'))}"
             self.result = FileData(filename=file.filename, content_type=file.content_type, field_name=field_name,
                                    url=url, message=f'{file.filename} successfully uploaded')
-        except(NoCredentialsError, ClientError, AttributeError, ValueError, NameError) as err:
+        except(NoCredentialsError, ClientError, AttributeError, ValueError, NameError, TypeError) as err:
             logger.error(f'Error uploading file: {err} in {self.__class__.__name__}')
             self.result = FileData(status=False, error=str(err), field_name=field_name, filename=file.filename,
                                    message=f'Unable to upload {file.filename}')

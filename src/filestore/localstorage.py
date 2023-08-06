@@ -78,7 +78,7 @@ class LocalStorage(FastStore):
             self.result = FileData(size=file.size, filename=file.filename, content_type=file.content_type,
                                    path=str(dest), field_name=field_name,
                                    message=f'{file.filename} storage was successful')
-        except (AttributeError, KeyError, NameError, FileNotFoundError) as err:
+        except (AttributeError, KeyError, NameError, FileNotFoundError, TypeError) as err:
             logger.error(f'Error uploading file: {err} in {self.__class__.__name__}')
             self.result = FileData(status=False, error=str(err), field_name=field_name, message=f'Unable to save'
                                                                                               f' {file.filename}')
