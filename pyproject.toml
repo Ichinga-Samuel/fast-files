@@ -6,7 +6,7 @@ requires = [
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "faststore"
+name = "filestore"
 version = "1.0.0"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -15,12 +15,16 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
 ]
-keywords = ['fastapi', 'filestorage', 'cloudstorage']
+keywords = ['fastapi', 'filestorage', 'cloudstorage', 'storageengine', 'faststore']
 authors = [{name = "Ichinga Samuel", email = "ichingasamuel@gmail.com"}]
 description = "Storage Engine Package for FastAPI"
 dependencies = [
     "fastapi",
     "python-multipart",
+]
+[project.optional-dependencies]
+s3 = [
+    'boto3',
 ]
 
 [project.urls]

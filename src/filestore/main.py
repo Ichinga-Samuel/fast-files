@@ -14,21 +14,42 @@ Classes:
     Result: The result of a file storage operation. A Pydantic model.
     FastStore: The base class for all storage services. An abstract class.
 """
-
+from typing import Any, Type, cast, TypedDict, TypeVar, NotRequired, Callable
 from abc import abstractmethod
-from typing import TypedDict, TypeVar, NotRequired, Callable
 from pathlib import Path
 from logging import getLogger
 from functools import cache
+from random import randint
 
 from starlette.datastructures import UploadFile as StarletteUploadFile
-from fastapi import UploadFile, Request, Form, BackgroundTasks, File
-from pydantic import BaseModel, create_model
+from fastapi import Request, UploadFile as UF, Form, BackgroundTasks
+from pydantic import BaseModel, create_model, Field
+
+from .util import FormModel
 
 Fields = TypedDict('Fields', {'name': str, 'max_count': NotRequired[int], 'required': NotRequired[bool]})
+
 Self = TypeVar('Self', bound='FastStore')
 
 logger = getLogger(__name__)
+
+
+class UploadFile(UF):
+    @classmethod
+    def validate(cls: Type["UploadFile"], v: Any) -> Any:
+        if not isinstance(v, (StarletteUploadFile, str, type(None))):
+            raise ValueError(f"Expected UploadFile, received: {type(v)}")
+        return v
+
+    @classmethod
+    def _validate(cls, __input_value: Any, _: Any) -> "UploadFile":
+        if not isinstance(__input_value, (StarletteUploadFile, str, type(None))):
+            raise ValueError(f"Expected UploadFile, received: {type(__input_value)}")
+        return cast(UploadFile, __input_value)
+
+
+def _file_filter(file):
+    return isinstance(file, StarletteUploadFile)
 
 
 def file_filter(req: Request, form: Form, field: str, file: UploadFile) -> bool:
@@ -41,7 +62,6 @@ def file_filter(req: Request, form: Form, field: str, file: UploadFile) -> bool:
         file (UploadFile): The file object.
 
     Returns (bool): True if the file is valid, False otherwise.
-
     """
     return isinstance(file, StarletteUploadFile) and file.filename
 
@@ -126,6 +146,12 @@ class Result(BaseModel):
     status: bool = True
 
 
+def validator(cls, v):
+    print(v)
+    assert True is True
+    return v
+
+
 class FastStore:
     """
     This class is used to upload files to a storage service.
@@ -194,7 +220,7 @@ class FastStore:
             fields: The fields to expect from the form. Usually for multiple file uploads from different fields.
 
         Note:
-            If fields is specified, name and count are ignored.
+            If fields and name are specified then the name field is added to the fields list.
         """
         field = {'name': name, 'max_count': count, 'required': required} if name else {}
         self.fields = fields or []
@@ -213,10 +239,14 @@ class FastStore:
         body = {}
         for field in self.fields:
             if field.get('max_count', 1) > 1:
-                body[field['name']] = (list[UploadFile], ...) if field.get('required') else (list[UploadFile], [])
+                body[field['name']] = (list[UploadFile], ...) if field.get('required', False) \
+                    else (list[UploadFile], Field([], validate_default=False))
             else:
-                body[field['name']] = (UploadFile, ...) if field.get('required') else (UploadFile, UploadFile(File(...)))
-        return create_model('FormModel', **body)
+                body[field['name']] = (UploadFile, ...) if field.get('required', False) \
+                    else (UploadFile, Field(None, validate_default=False))
+        model_name = f"FormModel{randint(100, 1000)}"
+        model = create_model(model_name, **body, __base__=FormModel)
+        return model
 
     async def __call__(self, req: Request, bgt: BackgroundTasks) -> Self:
         """
@@ -238,17 +268,18 @@ class FastStore:
             max_files, max_fields = self.config['max_files'], self.config['max_fields']
             form = await req.form(max_files=max_files, max_fields=max_fields)
             self.form = form
-            file_fields = [(field['name'], _filename(req, form, field['name'], file)) for field in self.fields for file in
-                           form.getlist((field['name']))[0:field.get('max_count', None)] if
-                           _filter(req, form, field['name'], file)]
+            file_fields = [(field['name'], _filename(req, form, field['name'], file)) for field in self.fields for
+                           file in form.getlist((field['name']))[0:field.get('max_count', None)]
+                           if (_file_filter(file) and _filter(req, form, field['name'], file))]
+
             self.max_count = len(file_fields)
             if not file_fields:
                 self._result = Result(message='No files were uploaded')
-                
+
             elif len(file_fields) == 1:
                 file_field = file_fields[0]
                 await self.upload(field_file=file_field)
-                
+
             else:
                 await self.multi_upload(field_files=file_fields)
         except (KeyError, AttributeError, ValueError, TypeError, NameError, MemoryError, BufferError) as err:

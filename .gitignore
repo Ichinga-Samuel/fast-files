@@ -4,3 +4,5 @@ uploads/
 .env
 __pycache__/
 test_data/
+*.egg-info/
+dist/

@@ -10,9 +10,16 @@ import logging
 from functools import cache
 from typing import BinaryIO
 from urllib.parse import quote as urlencode
+from logging import getLogger
 
-import boto3
-from botocore.exceptions import ClientError, NoCredentialsError
+logger = getLogger(__name__)
+
+try:
+    import boto3
+    from botocore.exceptions import ClientError, NoCredentialsError
+except ImportError as err:
+    logger.warning('boto3 is not installed. S3Storage will not be available.')
+    raise err
 
 from .main import FastStore, FileData, UploadFile
 

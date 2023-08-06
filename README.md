@@ -1,4 +1,4 @@
-# FastStore
+# FileStore
 
 Simple file storage dependency for FastAPI. Makes use of FastAPI's dependency injection system to provide a simple way
 to store files. Inspired by Multer it allows both single and multiple file uploads through different fields with a 
@@ -8,13 +8,16 @@ storage but can be easily extended to support other storage systems.
 ## Installation
 
 ```bash 
-pip install faststore
+pip install filestore
+
+# to use aws s3 storage
+pip install filestore[s3]
 ```
 ## Usage
 
 ```python
 from fastapi import FastAPI, File, UploadFile, Depends
-from faststore import LocalStorage, Result
+from filestore import LocalStorage, Result
 
 app = FastAPI()
 
@@ -39,15 +42,15 @@ async def local_multiple(model=Depends(multiple_local.model), loc=Depends(multip
 ```
 
 ## API
-FastStore Instantiation. All arguments are keyword arguments.
-**Keyword Arguments**:
+FastStore Instantiation. All arguments are keyword arguments.\
+**Keyword Arguments:**
 - `name str`: The name of the file field to expect from the form for a single field upload.
 - `count int`: The maximum number of files to accept for a single field upload.
 - `required bool`: Required for single field upload. Defaults to false.
 - `fields list[Fields]`: A list of fields to expect from the form. Usually for multiple file uploads from different fields.
 - `config Config`: The Config dictionary
 
-**Note**:
+**Note:**\
 If you provide both name and fields arguments the two are merged together with the name argument taking precedence if there is a name clash.\
 **Fields**
 A dictionary representing form fields. 
@@ -55,8 +58,10 @@ A dictionary representing form fields.
 - `max_count int`: The maximum number of files to expect
 - `required bool`: Optional flag to indicate if field is required. Defaults to false if not specified.
 
-**Config**
-The config dictionary to be passed to faststore. Config is a TypeDict and can be extended for customization.
+**Config**\
+The config dictionary to be passed to faststore class during instantiation. Config is a TypeDict and can be extended 
+for customization.
+
 |Key|Description|Note|
 |---|---|---|
 |`dest (str\|Path)`|The path to save the file relative to the current working directory. Defaults to uploads. Specifying destination will overide dest |LocalStorage and S3Storage
@@ -69,6 +74,21 @@ The config dictionary to be passed to faststore. Config is a TypeDict and can be
 |`extra_args dict`|Extra arguments for AWS S3 Storage| S3Storage|
 |`bucket str`|Name of storage bucket for cloud storage|Cloud Storage|
 |`region str`|Name of region for cloud storage|Cloud Storage|
+
+**\_\_call\_\_**\
+This method allows you to use the FastStore instance as a dependency for your route function. It sets the result
+of the file storage operation and returns an instance of the class. It accepts the request object and the background
+task object. The background task object is only used if the background config parameter is set to true.
+
+**model**\
+The model property dynamically generates a pydantic model for the FastStore instance. This model can be used as a
+dependency for your path function. It is generated based on the fields attribute. It is useful for validating the form
+fields and for api documentation. Using this property in your path function will enable openapi generate the
+appropriate form fields.
+
+**result**\
+The result property returns the result of the file storage operation. The setter method accepts
+a FileData object while the getter method returns a Result object.
 
 ### FileData
 This pydantic model represents the result of an individual file storage operation.
@@ -123,6 +143,7 @@ def local_filename(req: Request, form: Form, field: str, file: UploadFile) -> Up
     file.filename = f'local_{file.filename}'
     return file
 ```
+
 ### Filtering
 Set this to a function to control which files should be uploaded and which should be skipped. The function should look like this:
 ```python
@@ -168,11 +189,18 @@ and updated via the result property. The result property returns a Result object
 This class handles local file storage to the disk.
 
 ### S3Storage
-This class handles cloud storage to AWS S3. When using this class ensure that the following environment variables are set:
+This class handles cloud storage to AWS S3. When using this class ensure that the following environment variables
+are set. Any extra parameters is passed to the extra_args dict of the config dict.
 - `AWS_ACCESS_KEY_ID`
 - `AWS_SECRET_ACCESS_KEY`
-- `AWS_DEFAULT_REGION` This is optional as you can specify the region in the config.
+- `AWS_DEFAULT_REGION`: This is optional as you can specify the region in the config.
 - `AWS_BUCKET_NAME`: This is optional as you can specify the bucket name in the config.
+
+```python   
+from filestore import S3Storage
+s3 = S3Storage(fields=[{'name': 'book', 'max_count': 2, 'required': True}, {'name': 'image', 'max_count': 2}],
+               config={'region': 'us-east-1', 'bucket': 'my-bucket', extra_args={'ACL': 'public-read'}})
+```
 
 ### MemoryStorage
 This class handles memory storage. It stores the file in memory and returns the file object in the result object as 
@@ -182,8 +210,9 @@ a bytes object.
 You can run the file storage operation as a background task by setting the background config parameter to True.
 
 ### Build your own storage class
-You can build your own storage class by inheriting from the FastStore class and implementing the upload and 
-multiple_upload methods. just make sure you properly set the _result attribute with the result of the file storage.
+You can build your own storage class by inheriting from the FastStore class and implementing the **upload** and 
+**multiple_upload** methods. Just make sure you properly set the private **_result** attribute with the result of the file 
+storage operation.
 
 
 

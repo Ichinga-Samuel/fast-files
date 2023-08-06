@@ -100,7 +100,7 @@ The response model for the FastStore class.
 
 - `file` _FileData | None_ - The result of a single file upload or storage operation.
 - `files` _list[FileData]_ - The result of multiple file uploads or storage operations.
-- `failed` _FileData | list[FileData]_ - The result of a failed file upload or storage operation.
+- `failed` _list[FileData]_ - The result of a failed file upload or storage operation.
 - `error` _str_ - The error message if the file storage operation failed.
 - `message` _str_ - Success message if the file storage operation was successful.
 
@@ -130,7 +130,7 @@ The upload and multi_upload methods must be implemented in a child class.
 
 **Methods**:
 
-  upload (Callable[[tuple(str, UploadFile)]]): The method to upload a single file.
+  upload(Callable[[tuple(str, UploadFile)]]): The method to upload a single file.
   
 - `multi_upload` _Callable[[Request, Form, str, UploadFile]]_ - The method to upload multiple files.
   
@@ -193,7 +193,7 @@ Use the config parameter to specify the configuration for the storage service.
 ```python
 @property
 @cache
-def model()
+def model():
 ```
 
 Returns a pydantic model for the form fields.
@@ -271,7 +271,7 @@ Returns the result of the file storage.
 
 ```python
 @result.setter
-def result(value: FileData)
+def result(value: FileData):
 ```
 
 Sets the result of the file storage operation.

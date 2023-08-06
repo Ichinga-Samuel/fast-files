@@ -12,7 +12,7 @@ from pathlib import Path
 
 from fastapi import Request, UploadFile, Form
 
-from src.faststore import LocalStorage, S3Storage, MemoryStorage, Result
+from filestore import LocalStorage, MemoryStorage, S3Storage, Result
 
 
 def local_destination(req: Request, form: Form, field: str, file: UploadFile) -> Path:
@@ -63,7 +63,7 @@ def s3_destination(req: Request, form: Form, field: str, file: UploadFile) -> st
 # FastStore instances to be used in the app as dependencies.
 multiple_s3 = S3Storage(fields=[{'name': 'author', 'max_count': 2}, {'name': 'book', 'max_count': 2}],
                         config={'destination': s3_destination})
-single_s3 = S3Storage(name='author')
+single_s3 = S3Storage(name='author', required=True)
 single_mem = MemoryStorage(name='cover')
 multiple_mem = MemoryStorage(fields=[{'name': 'author', 'max_count': 5}, {'name': 'book', 'max_count': 2}])
 single_local = LocalStorage(name='book', config={'dest': 'test_data/uploads/single'})
