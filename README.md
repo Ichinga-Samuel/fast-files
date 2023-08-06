@@ -8,6 +8,7 @@ storage but can be easily extended to support other storage systems.
 ## Installation
 
 ```bash 
+# Python 3.11+
 pip install filestore
 
 # to use aws s3 storage
