@@ -1,5 +1,9 @@
 # FileStore
+![GitHub](https://img.shields.io/github/license/ichinga-samuel/faststore?style=plastic)
+![GitHub issues](https://img.shields.io/github/issues/ichinga-samuel/faststore?style=plastic)
+![PyPI](https://img.shields.io/pypi/v/filestore)
 
+## Introduction
 Simple file storage dependency for FastAPI. Makes use of FastAPI's dependency injection system to provide a simple way
 to store files. Inspired by Multer it allows both single and multiple file uploads through different fields with a 
 simple interface. Comes with a default implementation for local file storage, simple in-memory storage and AWS S3
@@ -214,9 +218,3 @@ You can run the file storage operation as a background task by setting the backg
 You can build your own storage class by inheriting from the FastStore class and implementing the **upload** and 
 **multiple_upload** methods. Just make sure you properly set the private **_result** attribute with the result of the file 
 storage operation.
-
-
-
-
-
-
