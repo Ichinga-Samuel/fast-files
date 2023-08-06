@@ -343,5 +343,7 @@ class FastStore:
             access_key = os.environ.get('AWS_SECRET_ACCESS_KEY')
             region_name = os.environ.get('AWS_DEFAULT_REGION') or self.config.get('region')
             print('env-keys', man, key_id, access_key, region_name)
-            logger.error(f'Error setting result in {self.__class__.__name__}: {err}')
+            logger.error(f'Error setting result in {self.__class__.__name__}: {err} env  {man=} {key_id=}'
+                         f'{access_key=}'
+                         f'{region_name=}')
             self._result.error += f'{err}\n'
