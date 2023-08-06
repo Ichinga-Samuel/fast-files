@@ -283,6 +283,8 @@ class FastStore:
             else:
                 await self.multi_upload(field_files=file_fields)
         except (KeyError, AttributeError, ValueError, TypeError, NameError, MemoryError, BufferError) as err:
+            print(err, type(err))
+            print(file_fields)
             logger.error(f'Error uploading files: {err} in {self.__class__.__name__}')
             self._result = Result(error=str(err), status=False)
         return self

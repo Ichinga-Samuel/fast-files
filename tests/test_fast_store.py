@@ -31,7 +31,7 @@ def test_s3_multiple(test_file1, test_file2, test_file3, test_file6, test_file5)
     Test multiple files upload to S3 storage.
     All arguments are fixtures from the __init__.py file
     """
-    files = [('author', test_file1), ('author', test_file2),('author', test_file3), ('book', test_file3),
+    files = [('author', test_file1), ('author', test_file2), ('author', test_file3), ('book', test_file3),
              ('book', test_file6)]
     response = client.post('/s3_multiple', files=files)
     res = response.json()
