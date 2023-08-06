@@ -29,7 +29,7 @@ def test_s3_single(test_file1):
 def test_s3_multiple(test_file1, test_file2, test_file3, test_file6, test_file5):
     """
     Test multiple files upload to S3 storage.
-    All arguments are fixtures from the __init__.py file
+    All arguments are fixtures from the __init__.
     """
     files = [('author', test_file1), ('author', test_file2), ('author', test_file3), ('book', test_file3),
              ('book', test_file6)]
@@ -43,7 +43,7 @@ def test_s3_multiple(test_file1, test_file2, test_file3, test_file6, test_file5)
 def test_local_single(test_file1):
     """
     Test single file upload to local storage.
-    All arguments are fixtures from the __init__.py file
+    All arguments are fixtures from the __init__.
     """
     response = client.post('/local_single', files={'book': test_file1})
     assert response.status_code == 200
@@ -56,7 +56,7 @@ def test_local_single(test_file1):
 def test_local_multiple(test_file1, test_file2, test_file3, test_file6, test_file5):
     """
     Test multiple files upload to local storage.
-    All arguments are fixtures from the __init__.py file
+    All arguments are fixtures from the __init__.
     """
     files = [('author', test_file1), ('author', test_file2), ('author', test_file3), ('book', test_file3),
              ('book', test_file6)]
@@ -70,7 +70,7 @@ def test_local_multiple(test_file1, test_file2, test_file3, test_file6, test_fil
 def test_mem_single(test_file1):
     """
     Test single file upload to memory storage
-    All arguments are fixtures from the __init__.py file
+    All arguments are fixtures from the __init__.
     """
     response = client.post('/mem_single', files={'cover': test_file1})
     assert response.status_code == 200
@@ -83,7 +83,7 @@ def test_mem_single(test_file1):
 def test_mem_multiple(test_file1, test_file2, test_file3, test_file6, test_file5):
     """
     Test multiple files upload to memory storage
-    All arguments are fixtures from the __init__.py file
+    All arguments are fixtures from the __init__.
     """
     response = client.post('/mem_multiple', files=[('book', test_file3), ('book', test_file6)])
     res = response.json()
