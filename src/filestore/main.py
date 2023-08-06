@@ -14,6 +14,7 @@ Classes:
     Result: The result of a file storage operation. A Pydantic model.
     FastStore: The base class for all storage services. An abstract class.
 """
+import os
 from typing import Any, Type, cast, TypedDict, TypeVar, NotRequired, Callable
 from abc import abstractmethod
 from pathlib import Path
@@ -283,8 +284,6 @@ class FastStore:
             else:
                 await self.multi_upload(field_files=file_fields)
         except (KeyError, AttributeError, ValueError, TypeError, NameError, MemoryError, BufferError) as err:
-            print(err, type(err))
-            print(file_fields)
             logger.error(f'Error uploading files: {err} in {self.__class__.__name__}')
             self._result = Result(error=str(err), status=False)
         return self
@@ -339,5 +338,10 @@ class FastStore:
                 self._result.message = (f'{len(self._result.files)} files stored\n{len(self._result.failed)} files not'
                                         f' stored')
         except Exception as err:
+            man = os.environ.get('man')
+            key_id = os.environ.get('AWS_ACCESS_KEY_ID')
+            access_key = os.environ.get('AWS_SECRET_ACCESS_KEY')
+            region_name = os.environ.get('AWS_DEFAULT_REGION') or self.config.get('region')
+            print(man, key_id, access_key, region_name)
             logger.error(f'Error setting result in {self.__class__.__name__}: {err}')
             self._result.error += f'{err}\n'
