@@ -21,6 +21,7 @@
             python -m pip install --upgrade pip setuptools
             pip install -e .[s3]
             pip install -r requirements.txt
+            mkdir -p ./tests/test_data
         - name: Run Tests
           env:
             AWS_ACCESS_KEY_ID: ${{secrets.AWS_ACCESS_KEY_ID}}
