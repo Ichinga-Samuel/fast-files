@@ -12,7 +12,7 @@ storage but can be easily extended to support other storage systems.
 ## Installation
 
 ```bash 
-# Python 3.11+
+# Python 3.10+
 pip install filestore
 
 # to use aws s3 storage
@@ -52,33 +52,32 @@ FastStore Instantiation. All arguments are keyword arguments.\
 - `name str`: The name of the file field to expect from the form for a single field upload.
 - `count int`: The maximum number of files to accept for a single field upload.
 - `required bool`: Required for single field upload. Defaults to false.
-- `fields list[Fields]`: A list of fields to expect from the form. Usually for multiple file uploads from different fields.
+- `fields list[FileField]`: A list of fields to expect from the form. Usually for multiple file uploads from different fields.
 - `config Config`: The Config dictionary
 
 **Note:**\
 If you provide both name and fields arguments the two are merged together with the name argument taking precedence if there is a name clash.\
-**Fields**
+**FileField**
 A dictionary representing form fields. 
 - `name str`: The name of the field
-- `max_count int`: The maximum number of files to expect
+- `max_count int`: The maximum number of files to expect. Defaults to one
 - `required bool`: Optional flag to indicate if field is required. Defaults to false if not specified.
+- `config Config`: A config dict for individual field: This is optional.
 
 **Config**\
-The config dictionary to be passed to faststore class during instantiation. Config is a TypeDict and can be extended 
-for customization.
-
+The config dictionary is to be passed to faststore class during instantiation or added to individual file field dict
 |Key|Description|Note|
 |---|---|---|
-|`dest (str\|Path)`|The path to save the file relative to the current working directory. Defaults to uploads. Specifying destination will overide dest |LocalStorage and S3Storage
+|`dest (str\|Path)`|The path to save the file relative to the current working directory. Defaults to uploads. Specifying destination will override dest |LocalStorage and S3Storage
 |`destination Callable[[Request, Form, str, UploadFile], str \| Path]`|A destination function saving the file|Local and Cloud Storage|
 |`filter Callable[[Request, Form, str, UploadFile], bool]`|Remove unwanted files|
-|`max_files int`|The maximum number of files to expect. Defaults to 1000|
-|`max_fields int`|The maximum number of file fields to expect. Defaults to 1000|
+|`max_files int`|The maximum number of files to expect. Defaults to 1000| Not applicable to filefield config dict|
+|`max_fields int`|The maximum number of file fields to expect. Defaults to 1000| Not applicable in filefield config dict|
 |`filename Callable[[Request, Form, str, UploadFile], UploadFile]`|A function for customizing the filename|Local and Cloud Storage|
 |`background bool`|If true run the storage operation as a background task|Local and Cloud Storage|
 |`extra_args dict`|Extra arguments for AWS S3 Storage| S3Storage|
 |`bucket str`|Name of storage bucket for cloud storage|Cloud Storage|
-|`region str`|Name of region for cloud storage|Cloud Storage|
+|`region str`|Name of region for cloud storage|Cloud Storage| Not available in filefield config dict|
 
 **\_\_call\_\_**\
 This method allows you to use the FastStore instance as a dependency for your route function. It sets the result
@@ -88,7 +87,7 @@ task object. The background task object is only used if the background config pa
 **model**\
 The model property dynamically generates a pydantic model for the FastStore instance. This model can be used as a
 dependency for your path function. It is generated based on the fields attribute. It is useful for validating the form
-fields and for api documentation. Using this property in your path function will enable openapi generate the
+fields and for API documentation. Using this property in your path function will enable openapi generate the
 appropriate form fields.
 
 **result**\
@@ -119,7 +118,7 @@ The response model for the FastStore class. A pydantic model.
 
 ### Filename and Destination Function. 
 You can specify a filename and destination function for customizing a filename and specifying a storage location for the saved file.
-The filename function should modify the filename attribute of the file and return the modified file while the destination function should return a path or string object. This functions have access to the request object, the form, the form field and the file objects.
+The filename function should modify the filename attribute of the file and return the modified file while the destination function should return a path or string object. These functions have access to the request object, the form, the form field and the file objects.
 
 #### A destination function
 ```python
