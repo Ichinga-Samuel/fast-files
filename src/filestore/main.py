@@ -14,7 +14,7 @@ Classes:
     Result: The result of a file storage operation. A Pydantic model.
     FastStore: The base class for all storage services. An abstract class.
 """
-from typing import Any, Type, cast, TypedDict, TypeVar, Callable
+from typing import Any, Type, cast, TypedDict, TypeVar, Callable, Union
 from abc import abstractmethod
 from pathlib import Path
 from logging import getLogger
@@ -44,14 +44,16 @@ class UploadFile(UF):
         return cast(UploadFile, __input_value)
 
 
-class FieldConfig(TypedDict, total=False):
+class Config(TypedDict, total=False):
     """
-    Configuration for individual fields.
+    The configuration for the FastStore class.
     """
-    dest: str | Path
-    destination: Callable[[Request, Form, str, UploadFile], str | Path]
-    filter: Callable[[Request, FormData, str, UploadFile], bool]
-    filename: Callable[[Request, FormData, str, UploadFile], UploadFile]
+    dest: Union[str, Path]
+    destination: Callable[[Request, Form, str, UploadFile], Union[str, Path]]
+    filter: Callable[[Request, Form, str, UploadFile], bool]
+    max_files: int
+    max_fields: int
+    filename: Callable[[Request, Form, str, UploadFile], UploadFile]
     background: bool
     extra_args: dict
     bucket: str
@@ -66,7 +68,7 @@ class FileField(TypedDict, total=False):
     max_count: int
     required: bool
     file: UploadFile
-    config: FieldConfig
+    config: Config
 
 
 Self = TypeVar('Self', bound='FastStore')
@@ -105,22 +107,6 @@ def filename(req: Request, form: FormData, field: str, file: UploadFile) -> Uplo
     return file
 
 
-class Config(TypedDict, total=False):
-    """
-    The configuration for the FastStore class.
-    """
-    dest: str | Path
-    destination: Callable[[Request, Form, str, UploadFile], str | Path]
-    filter: Callable[[Request, Form, str, UploadFile], bool]
-    max_files: int
-    max_fields: int
-    filename: Callable[[Request, Form, str, UploadFile], UploadFile]
-    background: bool
-    extra_args: dict
-    bucket: str
-    region: str
-
-
 class FileData(BaseModel):
     """
     The result of a file storage operation.
@@ -144,7 +130,7 @@ class FileData(BaseModel):
     content_type: str = ''
     filename: str = ''
     size: int = 0
-    file: bytes | None = None
+    file: Union[bytes, None] = None
     field_name: str = ''
     metadata: dict = {}
     error: str = ''
@@ -163,7 +149,7 @@ class Result(BaseModel):
         error (str): The error message if the file storage operation failed.
         message (str): Success message if the file storage operation was successful.
     """
-    file: FileData | None = None
+    file: Union[FileData, None] = None
     files: dict[str, FileData] = dict()
     failed: dict[str, FileData] = dict()
     error: str = ''
@@ -223,8 +209,8 @@ class FastStore:
     max_count: int
     _result: Result
 
-    def __init__(self, name: str = '', count: int = 1, required=False, fields: list[FileField] | None = None,
-                 config: Config | None = None):
+    def __init__(self, name: str = '', count: int = 1, required=False, fields: Union[list[FileField], None] = None,
+                 config: Union[Config, None] = None):
         """
         Initialize the FastStore class. For single file upload, specify the name of the file field and the expected
         number of files. If the field is required, set required to True.
@@ -244,8 +230,8 @@ class FastStore:
         field = {'name': name, 'max_count': count, 'required': required} if name else {}
         self.fields = fields or []
         self.fields.append(field) if field else ...
-        self.config = ({'filter': config_filter, 'max_files': 1000, 'max_fields': 1000, 'filename': filename}
-                       | (config or {}))
+        self.config = {'filter': config_filter, 'max_files': 1000, 'max_fields': 1000, 'filename': filename}, **(config or {})}
+                       
 
     @property
     @cache
