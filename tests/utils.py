@@ -10,12 +10,13 @@ Functions:
 
 from pathlib import Path
 
-from fastapi import Request, UploadFile, Form
+from fastapi import Request, UploadFile
+from starlette.datastructures import FormData
 
 from filestore import LocalStorage, MemoryStorage, S3Storage, Result
 
 
-def local_destination(req: Request, form: Form, field: str, file: UploadFile) -> Path:
+def local_destination(req: Request, form: FormData, field: str, file: UploadFile) -> Path:
     """
     Local storage destination function.
     Pass this function to the LocalStorage config parameter 'destination' to create a destination for the file.
@@ -29,7 +30,7 @@ def local_destination(req: Request, form: Form, field: str, file: UploadFile) ->
     return path / f'{file.filename}'
 
 
-def local_filter(req: Request, form: Form, field: str, file: UploadFile) -> bool:
+def local_filter(req: Request, form: FormData, field: str, file: UploadFile) -> bool:
     """
     Local storage filter function.
     Returns:
@@ -38,7 +39,7 @@ def local_filter(req: Request, form: Form, field: str, file: UploadFile) -> bool
     return file.filename and file.filename.endswith('.txt')
 
 
-def local_filename(req: Request, form: Form, field: str, file: UploadFile) -> UploadFile:
+def local_filename(req: Request, form: FormData, field: str, file: UploadFile) -> UploadFile:
     """
     Local storage filename function. Appends 'local_' to the filename.
 
@@ -49,7 +50,7 @@ def local_filename(req: Request, form: Form, field: str, file: UploadFile) -> Up
     return file
 
 
-def s3_destination(req: Request, form: Form, field: str, file: UploadFile) -> str:
+def s3_destination(req: Request, form: FormData, field: str, file: UploadFile) -> str:
     """
     S3 storage destination function. Returns the destination path for the file.
     With the field name as the folder name in title case and the filename as the file name.

@@ -123,7 +123,7 @@ The filename function should modify the filename attribute of the file and retur
 
 #### A destination function
 ```python
-def local_destination(req: Request, form: Form, field: str, file: UploadFile) -> Path:
+def local_destination(req: Request, form: FormData, field: str, file: UploadFile) -> Path:
     """
     Local storage destination function.
     Pass this function to the LocalStorage config parameter 'destination' to create a destination for the file.
@@ -138,7 +138,7 @@ def local_destination(req: Request, form: Form, field: str, file: UploadFile) ->
 ```
 #### A filename function
 ```python
-def local_filename(req: Request, form: Form, field: str, file: UploadFile) -> UploadFile:
+def local_filename(req: Request, form: FormData, field: str, file: UploadFile) -> UploadFile:
     """
     Local storage filename function. Appends 'local_' to the filename.
 
@@ -152,7 +152,7 @@ def local_filename(req: Request, form: Form, field: str, file: UploadFile) -> Up
 ### Filtering
 Set this to a function to control which files should be uploaded and which should be skipped. The function should look like this:
 ```python
-def local_filter(req: Request, form: Form, field: str, file: UploadFile) -> bool:
+def local_filter(req: Request, form: FormData, field: str, file: UploadFile) -> bool:
     """
     Local storage filter function.
     Returns:
