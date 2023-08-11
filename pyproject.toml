@@ -9,7 +9,7 @@ build-backend = "setuptools.build_meta"
 name = "filestore"
 version = "1.0.3"
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.7"
 classifiers = [
     "Programming Language :: Python :: 3",
     "License :: OSI Approved :: MIT License",

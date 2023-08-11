@@ -48,6 +48,12 @@ async def local_multiple(model=Depends(multiple_local.model), loc=Depends(multip
 
 ## API
 FastStore Instantiation. All arguments are keyword arguments.\
+
+### FastStore
+Abstract Base Class for file storage. All storage implementations must inherit from this class.
+```python
+def __init__(name: str = None, count: int = 1, required: bool = False, fields: list[FileField] = None, config: Config = None)
+```
 **Keyword Arguments:**
 - `name str`: The name of the file field to expect from the form for a single field upload.
 - `count int`: The maximum number of files to accept for a single field upload.

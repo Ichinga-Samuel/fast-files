@@ -7,6 +7,7 @@ Functions:
     local_filename: Local storage filename function
     s3_destination: S3 storage destination function
 """
+from __future__ import annotations
 
 from pathlib import Path
 

@@ -4,10 +4,11 @@ Amazon S3 storage for FastAPI. This module contains the S3Storage class which is
 Classes:
     S3Storage: A subclass of FastStore. It is used to upload files to Amazon S3.
 """
+from __future__ import annotations
+
 import os
 import asyncio
 import logging
-from functools import cache
 from typing import BinaryIO
 from urllib.parse import quote as urlencode
 from logging import getLogger
@@ -20,6 +21,11 @@ try:
 except ImportError as err:
     logger.warning('boto3 is not installed. S3Storage will not be available.')
     raise err
+
+try:
+    from functools import lru_cache, cache
+except ImportError:
+    cache = lru_cache(maxsize=None)
 
 from .main import FastStore, FileData, UploadFile, FileField
 
@@ -69,7 +75,7 @@ class S3Storage(FastStore):
         Upload a file to the destination the S3 bucket.
 
         Args:
-            field_file (tuple[str, UploadFile]): A tuple containing the field name and the UploadFile object.
+            file_field (tuple[str, UploadFile]): A tuple containing the field name and the UploadFile object.
 
         Returns:
             None: Nothing is returned.
@@ -102,7 +108,7 @@ class S3Storage(FastStore):
         Since the upload method is a coroutine, we can use asyncio.gather to upload multiple files concurrently.
 
         Args:
-            field_files (list[tuple[str, UploadFile]]): A list of tuples of the field name and the UploadFile object.
+            file_fields (list[FileField]): A list of tuples of the field name and the UploadFile object.
 
         Returns:
             None: Nothing is returned.

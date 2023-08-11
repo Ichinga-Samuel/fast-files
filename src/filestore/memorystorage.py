@@ -1,11 +1,12 @@
 """
 Memory storage for FastStore. This storage is used to store files in memory.
 """
+from __future__ import annotations
+
 import asyncio
 from logging import getLogger
 
 from .main import FastStore, FileData, FileField
-from fastapi import UploadFile
 
 logger = getLogger()
 

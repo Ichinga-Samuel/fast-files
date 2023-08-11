@@ -6,6 +6,7 @@ the server. It is the default storage class for FastAPI.
 Classes:
     LocalStorage: A subclass of FastStore. It is used to store files locally in the server. It is the default storage.
 """
+from __future__ import annotations
 
 import asyncio
 from pathlib import Path
@@ -21,12 +22,12 @@ class LocalStorage(FastStore):
     """
     Local storage for FastAPI.
     """
-    def get_path(self, file_field) -> Path:
+    def get_path(self, file_field: FileField) -> Path:
         """
         Get the path to save the file to.
+
         Args:
-            field_name (str): The name of the field the file is being uploaded to.
-            filename (str): The name of the file to save.
+            file_field (FileField): The file field object.
 
         Returns:
             Path: The path to save the file to.

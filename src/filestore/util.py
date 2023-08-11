@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+
 from typing import Any
 
 from pydantic.json_schema import GenerateJsonSchema, JsonSchemaWarningKind, DEFAULT_REF_TEMPLATE, JsonSchemaMode

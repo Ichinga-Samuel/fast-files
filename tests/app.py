@@ -1,12 +1,14 @@
 """
 This module contains the FastAPI application and the endpoints.
 """
+from __future__ import annotations
+
 import uvicorn
 from fastapi import FastAPI, Request, Depends
 from fastapi.templating import Jinja2Templates
 from dotenv import load_dotenv
 
-from .utils import single_local, multiple_local, single_s3, multiple_s3, single_mem, multiple_mem, Result
+from utils import single_local, multiple_local, single_s3, multiple_s3, single_mem, multiple_mem, Result
 
 load_dotenv()
 
