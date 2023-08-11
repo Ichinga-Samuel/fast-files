@@ -65,8 +65,8 @@ if td:
         """
         The configuration for the FastStore class.
         """
-        dest: Union[str, Path]
-        destination: Callable[[Request, Form, str, UploadFile], Union[str, Path]]
+        dest: str
+        destination: Callable[[Request, Form, str, UploadFile], str]
         filter: Callable[[Request, Form, str, UploadFile], bool]
         max_files: int
         max_fields: int
@@ -166,7 +166,7 @@ class Result(BaseModel):
         error (str): The error message if the file storage operation failed.
         message (str): Success message if the file storage operation was successful.
     """
-    file: Union[FileData, NoneType] = None
+    file: FileData = None
     files: Dict[str, FileData] = dict()
     failed: Dict[str, FileData] = dict()
     error: str = ''
@@ -226,8 +226,8 @@ class FastStore:
     max_count: int
     _result: Result
 
-    def __init__(self, name: str = '', count: int = 1, required=False, fields: Union[List[FileField], None] = None,
-                 config: Union[Config, None] = None):
+    def __init__(self, name: str = '', count: int = 1, required=False, fields: List[FileField] = None,
+                 config: Config = None):
         """
         Initialize the FastStore class. For single file upload, specify the name of the file field and the expected
         number of files. If the field is required, set required to True.
