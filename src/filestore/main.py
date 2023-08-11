@@ -14,8 +14,6 @@ Classes:
     Result: The result of a file storage operation. A Pydantic model.
     FastStore: The base class for all storage services. An abstract class.
 """
-from __future__ import annotations
-
 from typing import Any, Type, cast, TypeVar, Callable, Union, List, Dict
 from abc import abstractmethod
 from pathlib import Path
@@ -39,7 +37,6 @@ except ImportError:
 try:
     from functools import cache
 except ImportError as err:
-    print('no cache')
     from functools import lru_cache, partial
     cache = lru_cache(maxsize=None)
 
@@ -217,7 +214,7 @@ class FastStore:
 
         bucket (str): The name of the bucket to upload the file to in the cloud storage service.
     """
-    fields: list[FileField]
+    fields: List[FileField]
     config: Config
     form: FormData
     request: Request
@@ -323,7 +320,7 @@ class FastStore:
         """
 
     @abstractmethod
-    async def multi_upload(self, *, file_fields: list[FileField]):
+    async def multi_upload(self, *, file_fields: List[FileField]):
         """
         Upload multiple files to a storage service.
 

@@ -1,7 +1,7 @@
 """
 This module contains the FastAPI application and the endpoints.
 """
-from __future__ import annotations
+# from __future__ import annotations
 
 import uvicorn
 from fastapi import FastAPI, Request, Depends
