@@ -23,7 +23,7 @@ def test_s3_single(test_file1):
     res = response.json()
     assert res['status'] is True
     assert res['file']['filename'] == 'test_file1.txt'
-    assert len(res['files']) == 1
+    assert len([file for field in res['files'].values() for file in field]) == 1
 
 
 def test_s3_multiple(test_file1, test_file2, test_file3, test_file6, test_file5):
@@ -37,7 +37,7 @@ def test_s3_multiple(test_file1, test_file2, test_file3, test_file6, test_file5)
     res = response.json()
     assert response.status_code == 200
     assert res['status'] is True
-    assert len(res['files']) == 4
+    assert len([file for field in res['files'].values() for file in field]) == 4
 
 
 def test_local_single(test_file1):
@@ -50,7 +50,7 @@ def test_local_single(test_file1):
     res = response.json()
     assert res['status'] is True
     assert res['file']['filename'] == 'test_file1.txt'
-    assert len(res['files']) == 1
+    assert len([file for field in res['files'].values() for file in field]) == 1
 
 
 def test_local_multiple(test_file1, test_file2, test_file3, test_file6, test_file5):
@@ -64,7 +64,7 @@ def test_local_multiple(test_file1, test_file2, test_file3, test_file6, test_fil
     res = response.json()
     assert response.status_code == 200
     assert res['status'] is True
-    assert len(res['files']) == 3
+    assert len([file for field in res['files'].values() for file in field]) == 3
 
 
 def test_mem_single(test_file1):
@@ -77,7 +77,7 @@ def test_mem_single(test_file1):
     res = response.json()
     assert res['status'] is True
     assert res['file']['filename'] == 'test_file1.txt'
-    assert len(res['files']) == 1
+    assert len([file for field in res['files'].values() for file in field]) == 1
 
 
 def test_mem_multiple(test_file1, test_file2, test_file3, test_file6, test_file5):
@@ -89,4 +89,4 @@ def test_mem_multiple(test_file1, test_file2, test_file3, test_file6, test_file5
     res = response.json()
     assert response.status_code == 200
     assert res['status'] is True
-    assert len(res['files']) == 2
+    assert len([file for field in res['files'].values() for file in field]) == 2

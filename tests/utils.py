@@ -1,20 +1,12 @@
 """
 Utility functions for creating test cases.
-
-Functions:
-    local_destination: Local storage destination function
-    local_filter: Local storage filter function
-    local_filename: Local storage filename function
-    s3_destination: S3 storage destination function
 """
-from __future__ import annotations
-
 from pathlib import Path
 
 from fastapi import Request, UploadFile
 from starlette.datastructures import FormData
 
-from filestore import LocalStorage, MemoryStorage, S3Storage, Result
+from filestore import LocalStorage, MemoryStorage, S3Storage, Store
 
 
 def local_destination(req: Request, form: FormData, field: str, file: UploadFile) -> Path:
