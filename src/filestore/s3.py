@@ -1,14 +1,10 @@
 """
 Amazon S3 storage for FastAPI. This module contains the S3Storage class which is used to upload files to Amazon S3.
-
-Classes:
-    S3Storage: A subclass of FastStore. It is used to upload files to Amazon S3.
 """
 import os
 import asyncio
 import logging
-from functools import cache
-from typing import BinaryIO
+from typing import BinaryIO, List
 from urllib.parse import quote as urlencode
 from logging import getLogger
 
@@ -20,6 +16,13 @@ try:
 except ImportError as err:
     logger.warning('boto3 is not installed. S3Storage will not be available.')
     raise err
+
+try:
+    from functools import cache
+except ImportError:
+    from functools import lru_cache
+
+    cache = lru_cache(maxsize=None)
 
 from .main import FastStore, FileData, UploadFile, FileField
 
@@ -33,6 +36,7 @@ class S3Storage(FastStore):
     Properties:
         client (boto3.client): The S3 client.
     """
+
     @property
     @cache
     def client(self):
@@ -61,15 +65,18 @@ class S3Storage(FastStore):
         Returns:
             None: Nothing is returned.
         """
-        await asyncio.to_thread(self.client.upload_fileobj, file_obj, bucket, obj_name, ExtraArgs=extra_args)
-        
+        try:
+            await asyncio.to_thread(self.client.upload_fileobj, file_obj, bucket, obj_name, ExtraArgs=extra_args)
+        except AttributeError:
+            self.client.upload_fileobj(file_obj, bucket, obj_name, ExtraArgs=extra_args)
+
     # noinspection PyTypeChecker
     async def upload(self, *, file_field: FileField):
         """
         Upload a file to the destination the S3 bucket.
 
         Args:
-            field_file (tuple[str, UploadFile]): A tuple containing the field name and the UploadFile object.
+            file_field (tuple[str, UploadFile]): A tuple containing the field name and the UploadFile object.
 
         Returns:
             None: Nothing is returned.
@@ -78,7 +85,8 @@ class S3Storage(FastStore):
         try:
             dest = file_field.get('config', {}).get('destination') or self.config.get('destination', None)
             object_name = dest(self.request, self.form, field_name, file) if dest else file.filename
-            bucket = file_field.get('config', {}).get('bucket') or self.config.get('bucket') or os.environ.get('AWS_BUCKET_NAME')
+            bucket = file_field.get('config', {}).get('bucket') or self.config.get('bucket') or os.environ.get(
+                'AWS_BUCKET_NAME')
             region = self.config.get('region') or os.environ.get('AWS_DEFAULT_REGION')
             extra_args = file_field.get('config', {}).get('extra_args', {}) or self.config.get('extra_args', {})
 
@@ -89,20 +97,20 @@ class S3Storage(FastStore):
                 await self._upload(file_obj=file.file, bucket=bucket, obj_name=object_name, extra_args=extra_args)
 
             url = f"https://{bucket}.s3.{region}.amazonaws.com/{urlencode(object_name.encode('utf8'))}"
-            self.result = FileData(filename=file.filename, content_type=file.content_type, field_name=field_name,
-                                   url=url, message=f'{file.filename} successfully uploaded')
+            self.store = FileData(filename=file.filename, content_type=file.content_type, field_name=field_name,
+                                  url=url, message=f'{file.filename} successfully uploaded')
         except(NoCredentialsError, ClientError, AttributeError, ValueError, NameError, TypeError) as err:
             logger.error(f'Error uploading file: {err} in {self.__class__.__name__}')
-            self.result = FileData(status=False, error=str(err), field_name=field_name, filename=file.filename,
-                                   message=f'Unable to upload {file.filename}')
+            self.store = FileData(status=False, error=str(err), field_name=field_name, filename=file.filename,
+                                  message=f'Unable to upload {file.filename}')
 
-    async def multi_upload(self, *, file_fields: list[FileField]):
+    async def multi_upload(self, *, file_fields: List[FileField]):
         """
         Upload multiple files to the destination S3 bucket.
         Since the upload method is a coroutine, we can use asyncio.gather to upload multiple files concurrently.
 
         Args:
-            field_files (list[tuple[str, UploadFile]]): A list of tuples of the field name and the UploadFile object.
+            file_fields (list[FileField]): A of FileField objects.
 
         Returns:
             None: Nothing is returned.
