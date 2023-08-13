@@ -1,8 +1,8 @@
 """
 This module contains a test FastAPI application and the endpoints.
 """
-import uvicorn
 from fastapi import FastAPI, Request, Depends
+import uvicorn
 from fastapi.templating import Jinja2Templates
 from dotenv import load_dotenv
 
