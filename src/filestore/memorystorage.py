@@ -4,6 +4,7 @@ Memory storage for FastStore. This storage is used to store files in memory.
 import asyncio
 from typing import List
 from logging import getLogger
+from base64 import b64encode
 
 from .main import FastStore, FileData, FileField
 
@@ -21,6 +22,9 @@ class MemoryStorage(FastStore):
         field_name, file = file_field['name'], file_field['file']
         try:
             file_object = await file.read()
+            if 'image' in file.content_type:
+                file_object = b64encode(file_object)
+
             self.store = FileData(size=file.size, filename=file.filename, content_type=file.content_type,
                                   field_name=field_name, file=file_object,
                                   message=f'{file.filename} saved successfully')

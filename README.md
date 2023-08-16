@@ -325,7 +325,7 @@ s3 = S3Storage(fields=[{'name': 'book', 'max_count': 2, 'required': True}, {'nam
 
 ### MemoryStorage
 This class handles memory storage. It stores the file in memory and returns the file object in the store object as 
-a bytes object.
+a bytes object. For image files they are encoded with base64 encoding before returning.
 
 ### Background Tasks
 You can run the file storage operation as a background task by setting the background key in the config parameter
